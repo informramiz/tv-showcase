@@ -15,6 +15,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -155,5 +156,16 @@ class SettingsViewModelTest {
             cancelAndIgnoreRemainingEvents()
         }
         assertEquals(15, repository.settings.first().slideIntervalSeconds)
+    }
+
+    @Test
+    fun rapidTogglesApplyOneAfterAnother() = runTest(main.dispatcher) {
+        val repository = FakeSettingsRepository()
+        val vm = SettingsViewModel(repository)
+        vm.toggle24HourClock()
+        vm.toggle24HourClock()
+        vm.toggle24HourClock()
+        advanceUntilIdle()
+        assertFalse(repository.settings.first().use24HourClock)
     }
 }

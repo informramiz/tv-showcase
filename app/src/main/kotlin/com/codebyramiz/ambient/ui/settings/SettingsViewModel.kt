@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(private val repository: SettingsRepository) : ViewModel() {
@@ -22,22 +24,22 @@ class SettingsViewModel @Inject constructor(private val repository: SettingsRepo
             AmbientSettings(),
         )
 
-    fun selectCity(city: City) {
-        viewModelScope.launch { repository.setCity(city) }
+    // The read-modify-write toggles run one at a time, so rapid presses never start from the same value.
+    private val writes = Mutex()
+
+    /** Suspends until the city is stored, so the caller can navigate away without cancelling the write. */
+    suspend fun selectCity(city: City) = repository.setCity(city)
+
+    fun toggleTemperatureUnit() = serialized { repository.setTemperatureUnit(current().temperatureUnit.next) }
+
+    fun cycleSlideInterval() = serialized {
+        repository.setSlideIntervalSeconds(AmbientSettings.nextInterval(current().slideIntervalSeconds))
     }
 
-    fun toggleTemperatureUnit() {
-        viewModelScope.launch { repository.setTemperatureUnit(current().temperatureUnit.next) }
-    }
+    fun toggle24HourClock() = serialized { repository.setUse24HourClock(!current().use24HourClock) }
 
-    fun cycleSlideInterval() {
-        viewModelScope.launch {
-            repository.setSlideIntervalSeconds(AmbientSettings.nextInterval(current().slideIntervalSeconds))
-        }
-    }
-
-    fun toggle24HourClock() {
-        viewModelScope.launch { repository.setUse24HourClock(!current().use24HourClock) }
+    private fun serialized(block: suspend () -> Unit) {
+        viewModelScope.launch { writes.withLock { block() } }
     }
 
     // Read the stored value, not the UI mirror, so a toggle never works from a not-yet-loaded default.

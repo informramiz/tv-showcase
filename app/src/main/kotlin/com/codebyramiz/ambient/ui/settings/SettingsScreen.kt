@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -36,6 +37,7 @@ import com.codebyramiz.ambient.core.model.AmbientSettings
 import com.codebyramiz.ambient.core.model.City
 import com.codebyramiz.ambient.ui.theme.ScreenPaddingHorizontal
 import com.codebyramiz.ambient.ui.theme.ScreenPaddingVertical
+import kotlinx.coroutines.launch
 
 const val TAG_SETTING_CITY = "setting-city"
 const val TAG_SETTING_UNIT = "setting-unit"
@@ -122,11 +124,14 @@ fun CityPickerScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
     CityPickerContent(
         selected = settings.city,
-        onSelect = {
-            viewModel.selectCity(it)
-            onDone()
+        onSelect = { city ->
+            scope.launch {
+                viewModel.selectCity(city)
+                onDone()
+            }
         },
         modifier = modifier,
     )
@@ -136,9 +141,13 @@ fun CityPickerScreen(
 fun CityPickerContent(selected: City, onSelect: (City) -> Unit, modifier: Modifier = Modifier) {
     val selectedRequester = remember { FocusRequester() }
     val selectedIndex = City.ALL.indexOfFirst { it.id == selected.id }.coerceAtLeast(0)
-    // Start scrolled so the current city is composed, which is what lets it take focus.
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = (selectedIndex - 2).coerceAtLeast(0))
-    LaunchedEffect(Unit) { selectedRequester.requestFocus() }
+    val listState = rememberLazyListState()
+    // The stored city can arrive after first composition. Scroll it into composition before focusing,
+    // since a focus request on a row that is not composed would throw.
+    LaunchedEffect(selectedIndex) {
+        listState.scrollToItem((selectedIndex - 2).coerceAtLeast(0))
+        selectedRequester.requestFocus()
+    }
 
     ScreenFrame(
         title = "City",
