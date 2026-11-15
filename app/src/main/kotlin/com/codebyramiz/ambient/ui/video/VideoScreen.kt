@@ -32,6 +32,7 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.RawResourceDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.compose.ContentFrame
@@ -86,6 +87,7 @@ fun VideoScreen(
     )
 }
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 private fun VideoContent(
     player: Player,
@@ -163,6 +165,7 @@ internal fun statusText(state: VideoUiState, hintVisible: Boolean): String? = wh
     else -> null
 }
 
+@androidx.annotation.OptIn(UnstableApi::class)
 private fun createAmbientPlayer(context: Context): ExoPlayer = ExoPlayer.Builder(context)
     .setAudioAttributes(
         AudioAttributes.Builder()
