@@ -8,7 +8,7 @@
 | #3 | 3ed8e5d | UI polish, Home focus restore, emulator screenshots |
 | #4 | 5a63ead | README |
 | #5 | 63883f3 | Codex round 1 fixes |
-| #6 | see `git log` (squash of fix/review-r2) | Codex round 2 fixes |
+| #6 | 5b4d9c4 | Codex round 2 fixes |
 
 ## CI gate
 buildPC self-hosted runner (`[self-hosted, buildpc]`, fork-PR guard); jobs ktlint, unit tests, lint, assemble. Local full run before each push.
@@ -25,7 +25,7 @@ Verified: leanback feature, LEANBACK_LAUNCHER resolves, launch from launcher, D-
 Teardown: emulator killed, lock released, AVD deleted, system image uninstalled. `df -g /`: 298 GiB avail.
 
 ## Not verified / known
-- Round 2 and 3 fixes (#6) not re-run on the emulator; covered by unit tests/CI only.
+- Round 2 fixes (#6) not re-run on the emulator; covered by unit tests/CI only.
 - Slideshow position restore after process death is covered by unit tests, not captured on the emulator.
 - Video mute (Up/Down) not exercised on the emulator.
 - Repo is still private (not changed).
