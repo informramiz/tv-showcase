@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Self-hosted runner (buildPC): never run fork PRs on it.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, buildpc]
+    timeout-minutes: 45
+    # buildPC (Windows): JDK 21 and the Android SDK are preinstalled there.
+    defaults:
+      run:
+        shell: 'C:\PROGRA~1\Git\bin\bash.exe -e -o pipefail {0}'
+    env:
+      JAVA_HOME: 'C:\Program Files\Eclipse Adoptium\jdk-21.0.12.101-hotspot'
+      ANDROID_HOME: 'C:\Android\sdk'
+    steps:
+      - uses: actions/checkout@v5
+      - name: ktlint
+        run: ./gradlew ktlintCheck
+      - name: Unit tests
+        run: ./gradlew test
+      - name: Android lint
+        run: ./gradlew lint
+      - name: Assemble debug APKs
+        run: ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: reports
+          path: |
+            **/build/reports/
+            **/build/test-results/
