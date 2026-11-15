@@ -4,13 +4,16 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.codebyramiz.ambient.core.model.AmbientSettings
 import com.codebyramiz.ambient.core.model.City
 import com.codebyramiz.ambient.core.model.TemperatureUnit
+import java.io.IOException
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
@@ -28,6 +31,8 @@ interface SettingsRepository {
 
 class DataStoreSettingsRepository @Inject constructor(private val store: DataStore<Preferences>) : SettingsRepository {
     override val settings: Flow<AmbientSettings> = store.data
+        // An unreadable file falls back to defaults instead of crashing the collector.
+        .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
         .map { prefs ->
             AmbientSettings(
                 city = City.fromIdOrDefault(prefs[KEY_CITY]),
