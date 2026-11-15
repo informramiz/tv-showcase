@@ -23,7 +23,7 @@ More captures from the emulator run are in [docs/demo](docs/demo).
 
 ## Features
 
-- **Home**: clock, date and weather over a night scene, with three cards (Slideshow, Ambient
+- **Home**: clock, date and weather over a backdrop that follows the time of day, with three cards (Slideshow, Ambient
   video, Settings). Focus returns to the card you came from.
 - **Slideshow**: bundled images. Left/Right change scene, OK pauses and resumes, Back returns.
   Position and pause state survive process death.
