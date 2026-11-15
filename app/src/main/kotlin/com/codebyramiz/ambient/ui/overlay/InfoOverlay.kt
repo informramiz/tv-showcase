@@ -86,10 +86,10 @@ fun WeatherBlock(info: AmbientInfo, modifier: Modifier = Modifier) {
 
 @Composable
 private fun WeatherText(icon: ImageVector, headline: String, detail: String) {
-    Icon(icon, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
+    Icon(icon, contentDescription = null, modifier = Modifier.size(56.dp), tint = MaterialTheme.colorScheme.primary)
     Spacer(Modifier.width(16.dp))
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(headline, style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Normal))
+        Text(headline, style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Normal))
         Text(
             detail,
             style = MaterialTheme.typography.titleMedium,

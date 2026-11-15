@@ -1,11 +1,13 @@
 package com.codebyramiz.ambient.ui.theme
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Typography
 import androidx.tv.material3.darkColorScheme
@@ -40,5 +42,8 @@ private val AmbientTypography = Typography(
 
 @Composable
 fun AmbientTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = AmbientColors, typography = AmbientTypography, content = content)
+    MaterialTheme(colorScheme = AmbientColors, typography = AmbientTypography) {
+        // tv-material's Text falls back to LocalContentColor, which is black outside a Surface.
+        CompositionLocalProvider(LocalContentColor provides AmbientColors.onSurface, content = content)
+    }
 }

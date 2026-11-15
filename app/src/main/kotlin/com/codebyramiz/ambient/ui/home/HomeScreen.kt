@@ -16,7 +16,10 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,6 +27,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -50,6 +54,8 @@ const val TAG_HOME_SLIDESHOW = "home-slideshow"
 const val TAG_HOME_VIDEO = "home-video"
 const val TAG_HOME_SETTINGS = "home-settings"
 
+private const val CARD_COUNT = 3
+
 @Composable
 fun HomeScreen(
     onOpenSlideshow: () -> Unit,
@@ -71,8 +77,10 @@ fun HomeContent(
     modifier: Modifier = Modifier,
 ) {
     val backdrop = SceneCatalog.forHour(info?.time?.hour ?: 12)
-    val firstCard = remember { FocusRequester() }
-    LaunchedEffect(Unit) { firstCard.requestFocus() }
+    val cards = remember { List(CARD_COUNT) { FocusRequester() } }
+    // Survives leaving Home, so Back lands on the card that was opened.
+    var lastCard by rememberSaveable { mutableIntStateOf(0) }
+    LaunchedEffect(Unit) { cards[lastCard].requestFocus() }
 
     Box(modifier.fillMaxSize()) {
         Image(
@@ -97,22 +105,22 @@ fun HomeContent(
                 .padding(horizontal = ScreenPaddingHorizontal, vertical = ScreenPaddingVertical),
         ) {
             Text("Ambient", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(4.dp))
             if (info != null) {
-                ClockBlock(info)
-                Spacer(Modifier.height(20.dp))
+                ClockBlock(info, large = false)
+                Spacer(Modifier.height(8.dp))
                 WeatherBlock(info)
             }
             Spacer(Modifier.weight(1f))
             Row(
-                Modifier.focusRestorer(firstCard),
+                Modifier.focusRestorer(cards[lastCard]),
                 horizontalArrangement = Arrangement.spacedBy(24.dp),
             ) {
                 FeatureCard(
                     title = "Slideshow",
                     subtitle = "Scenes, clock and weather",
                     onClick = onOpenSlideshow,
-                    modifier = Modifier.focusRequester(firstCard).testTag(TAG_HOME_SLIDESHOW),
+                    modifier = Modifier.cardFocus(cards[0]) { lastCard = 0 }.testTag(TAG_HOME_SLIDESHOW),
                 ) {
                     Image(
                         painterResource(R.drawable.scene_dusk),
@@ -125,7 +133,7 @@ fun HomeContent(
                     title = "Ambient video",
                     subtitle = "Slow colour and soft sound",
                     onClick = onOpenVideo,
-                    modifier = Modifier.testTag(TAG_HOME_VIDEO),
+                    modifier = Modifier.cardFocus(cards[1]) { lastCard = 1 }.testTag(TAG_HOME_VIDEO),
                 ) {
                     Image(
                         painterResource(R.drawable.video_poster),
@@ -138,22 +146,29 @@ fun HomeContent(
                     title = "Settings",
                     subtitle = "City, units, timing",
                     onClick = onOpenSettings,
-                    modifier = Modifier.testTag(TAG_HOME_SETTINGS),
+                    modifier = Modifier.cardFocus(cards[2]) { lastCard = 2 }.testTag(TAG_HOME_SETTINGS),
                 ) {
                     Box(
                         Modifier.fillMaxSize().drawWithContent {
                             drawRect(Brush.linearGradient(listOf(Color(0xFF232A63), Color(0xFF6A3D9A))))
                             drawContent()
                         },
-                        contentAlignment = Alignment.Center,
+                        contentAlignment = Alignment.TopCenter,
                     ) {
-                        Icon(Icons.Rounded.Settings, contentDescription = null, modifier = Modifier.size(72.dp))
+                        Icon(
+                            Icons.Rounded.Settings,
+                            contentDescription = null,
+                            modifier = Modifier.padding(top = 28.dp).size(64.dp),
+                        )
                     }
                 }
             }
         }
     }
 }
+
+private fun Modifier.cardFocus(requester: FocusRequester, onFocused: () -> Unit): Modifier =
+    focusRequester(requester).onFocusChanged { if (it.isFocused) onFocused() }
 
 @Composable
 private fun FeatureCard(
@@ -165,7 +180,7 @@ private fun FeatureCard(
 ) {
     Card(
         onClick = onClick,
-        modifier = modifier.size(width = 300.dp, height = 196.dp),
+        modifier = modifier.size(width = 260.dp, height = 160.dp),
         shape = CardDefaults.shape(RoundedCornerShape(16.dp)),
         scale = CardDefaults.scale(focusedScale = 1.08f),
         border = CardDefaults.border(
