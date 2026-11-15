@@ -1,6 +1,7 @@
 package com.codebyramiz.ambient.ui
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import app.cash.turbine.test
 import com.codebyramiz.ambient.FakeSettingsRepository
 import com.codebyramiz.ambient.MainDispatcherRule
@@ -10,7 +11,9 @@ import com.codebyramiz.ambient.core.model.TemperatureUnit
 import com.codebyramiz.ambient.ui.settings.SettingsViewModel
 import com.codebyramiz.ambient.ui.slideshow.SlideshowViewModel
 import com.codebyramiz.ambient.ui.video.VideoViewModel
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -27,10 +30,21 @@ class SlideshowViewModelTest {
         seconds: Int = 10,
         handle: SavedStateHandle = SavedStateHandle(),
         settings: FakeSettingsRepository = FakeSettingsRepository(AmbientSettings(slideIntervalSeconds = seconds)),
-    ) = SlideshowViewModel(settings, handle)
+    ) = SlideshowViewModel(settings, handle).also { created += it }
+
+    private val created = mutableListOf<SlideshowViewModel>()
+
+    /** The auto-advance timer never ends, so scopes are cancelled before runTest drains its scheduler. */
+    private fun slideshowTest(body: suspend TestScope.() -> Unit) = runTest(main.dispatcher) {
+        try {
+            body()
+        } finally {
+            created.forEach { it.viewModelScope.cancel() }
+        }
+    }
 
     @Test
-    fun advancesOnTheConfiguredInterval() = runTest(main.dispatcher) {
+    fun advancesOnTheConfiguredInterval() = slideshowTest {
         val vm = viewModel(seconds = 5)
         runCurrent()
         assertEquals(0, vm.state.value.position)
@@ -41,7 +55,7 @@ class SlideshowViewModelTest {
     }
 
     @Test
-    fun manualNavigationRestartsTheTimerAndWrapsBackwards() = runTest(main.dispatcher) {
+    fun manualNavigationRestartsTheTimerAndWrapsBackwards() = slideshowTest {
         val vm = viewModel(seconds = 10)
         runCurrent()
         advanceTimeBy(9_000)
@@ -56,7 +70,7 @@ class SlideshowViewModelTest {
     }
 
     @Test
-    fun pausingStopsAdvancingAndResumingContinues() = runTest(main.dispatcher) {
+    fun pausingStopsAdvancingAndResumingContinues() = slideshowTest {
         val vm = viewModel(seconds = 5)
         runCurrent()
         vm.togglePause()
@@ -71,7 +85,7 @@ class SlideshowViewModelTest {
     }
 
     @Test
-    fun positionAndPauseSurviveProcessDeathThroughSavedState() = runTest(main.dispatcher) {
+    fun positionAndPauseSurviveProcessDeathThroughSavedState() = slideshowTest {
         val handle = SavedStateHandle()
         val first = viewModel(handle = handle)
         runCurrent()
@@ -88,7 +102,7 @@ class SlideshowViewModelTest {
     }
 
     @Test
-    fun changingTheIntervalInSettingsTakesEffectImmediately() = runTest(main.dispatcher) {
+    fun changingTheIntervalInSettingsTakesEffectImmediately() = slideshowTest {
         val settings = FakeSettingsRepository(AmbientSettings(slideIntervalSeconds = 30))
         val vm = viewModel(settings = settings)
         runCurrent()

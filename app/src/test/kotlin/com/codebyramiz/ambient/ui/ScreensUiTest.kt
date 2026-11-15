@@ -1,13 +1,15 @@
 package com.codebyramiz.ambient.ui
 
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.pressKey
 import com.codebyramiz.ambient.core.model.AmbientInfo
 import com.codebyramiz.ambient.core.model.AmbientSettings
@@ -42,6 +44,10 @@ import org.robolectric.annotation.Config
 class ScreensUiTest {
     @get:Rule val compose = createComposeRule()
 
+    private fun SemanticsNodeInteraction.pressOk() {
+        performSemanticsAction(SemanticsActions.OnClick)
+    }
+
     private val info = AmbientInfo(
         time = LocalDateTime.of(2026, 11, 15, 21, 5),
         city = City.DEFAULT,
@@ -68,9 +74,9 @@ class ScreensUiTest {
         }
         compose.onNodeWithText("Zurich, Switzerland").assertIsDisplayed()
         compose.onNodeWithText("Celsius (°C)").assertIsDisplayed()
-        compose.onNodeWithTag(TAG_SETTING_CITY).performClick()
-        compose.onNodeWithTag(TAG_SETTING_UNIT).performClick()
-        compose.onNodeWithTag(TAG_SETTING_24H).performClick()
+        compose.onNodeWithTag(TAG_SETTING_CITY).pressOk()
+        compose.onNodeWithTag(TAG_SETTING_UNIT).pressOk()
+        compose.onNodeWithTag(TAG_SETTING_24H).pressOk()
         assertEquals(listOf(1, 1, 1), listOf(cityOpened, unitToggles, clockToggles))
     }
 
@@ -81,7 +87,7 @@ class ScreensUiTest {
             AmbientTheme { CityPickerContent(selected = City.DEFAULT, onSelect = { chosen = it }) }
         }
         val london = City.ALL.first { it.id == "london" }
-        compose.onNodeWithTag(cityTag(london)).performClick()
+        compose.onNodeWithTag(cityTag(london)).pressOk()
         assertEquals(london, chosen)
     }
 
