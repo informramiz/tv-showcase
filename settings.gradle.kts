@@ -16,4 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "tv-showcase"
 
-include(":core:model", ":core:data")
+include(":core:model", ":core:data", ":app")

@@ -8,7 +8,7 @@ import pathlib
 import subprocess
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 RES = ROOT / "app/src/main/res"
@@ -85,7 +85,24 @@ def render_video():
     print(out.name, out.stat().st_size // 1024, "KB")
 
 
+def render_poster_and_banner():
+    """Video poster for the Home card, and the 320x180dp (xhdpi) launcher banner."""
+    poster = RES / "drawable-nodpi/video_poster.webp"
+    subprocess.run(
+        ["ffmpeg", "-y", "-loglevel", "error", "-ss", "8", "-i", str(RES / "raw/ambient_loop.mp4"),
+         "-frames:v", "1", "-vf", "scale=640:360", "/tmp/ambient_poster.png"],
+        check=True,
+    )
+    Image.open("/tmp/ambient_poster.png").convert("RGB").save(poster, "WEBP", quality=80)
+    banner = Image.open(RES / "drawable-nodpi/scene_dusk.webp").convert("RGB").resize((640, 360))
+    font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 84)
+    ImageDraw.Draw(banner).text((40, 238), "Ambient", font=font, fill=(255, 255, 255))
+    (RES / "drawable-xhdpi").mkdir(exist_ok=True)
+    banner.save(RES / "drawable-xhdpi/banner.png")
+
+
 if __name__ == "__main__":
     for n, (name, spec) in enumerate(SCENES.items()):
         render(name, spec, seed=7 + n)
     render_video()
+    render_poster_and_banner()
