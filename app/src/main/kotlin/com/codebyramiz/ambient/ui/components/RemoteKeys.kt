@@ -11,7 +11,7 @@ enum class RemoteAction { Left, Right, Up, Down, Select, PlayPause, Next, Previo
 /** Translates a remote-control key press into a [RemoteAction]; null for keys we do not handle. */
 fun KeyEvent.toRemoteAction(): RemoteAction? {
     if (type != KeyEventType.KeyDown) return null
-    return when (key) {
+    val action = when (key) {
         Key.DirectionLeft -> RemoteAction.Left
         Key.DirectionRight -> RemoteAction.Right
         Key.DirectionUp -> RemoteAction.Up
@@ -22,4 +22,8 @@ fun KeyEvent.toRemoteAction(): RemoteAction? {
         Key.MediaPrevious, Key.MediaRewind -> RemoteAction.Previous
         else -> null
     }
+    // Holding a key repeats it. Scene navigation may repeat; toggles must fire once per press.
+    return action?.takeUnless { nativeKeyEvent.repeatCount > 0 && it in TOGGLES }
 }
+
+private val TOGGLES = setOf(RemoteAction.Select, RemoteAction.PlayPause, RemoteAction.Up, RemoteAction.Down)

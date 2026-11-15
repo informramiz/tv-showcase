@@ -2,8 +2,10 @@ package com.codebyramiz.ambient.core.data.di
 
 import android.content.Context
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import com.codebyramiz.ambient.core.data.ClockRepository
 import com.codebyramiz.ambient.core.data.DataStoreSettingsRepository
@@ -38,6 +40,7 @@ abstract class DataBindingsModule {
 object DataStoreModule {
     @Provides
     @Singleton
-    fun preferences(@ApplicationContext context: Context): DataStore<Preferences> =
-        PreferenceDataStoreFactory.create { context.preferencesDataStoreFile("ambient_settings") }
+    fun preferences(@ApplicationContext context: Context): DataStore<Preferences> = PreferenceDataStoreFactory.create(
+        corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() },
+    ) { context.preferencesDataStoreFile("ambient_settings") }
 }

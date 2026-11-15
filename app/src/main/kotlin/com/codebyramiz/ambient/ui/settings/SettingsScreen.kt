@@ -18,8 +18,10 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -125,12 +127,17 @@ fun CityPickerScreen(
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
+    var saving by remember { mutableStateOf(false) }
     CityPickerContent(
         selected = settings.city,
         onSelect = { city ->
-            scope.launch {
-                viewModel.selectCity(city)
-                onDone()
+            // One selection at a time, so we navigate back exactly once.
+            if (!saving) {
+                saving = true
+                scope.launch {
+                    viewModel.selectCity(city)
+                    onDone()
+                }
             }
         },
         modifier = modifier,
