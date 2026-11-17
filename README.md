@@ -6,6 +6,8 @@ An Android TV ambient screen built with Compose for TV. It plays a full-screen s
 bundled, generated artwork with a clock and live weather overlay, and has a Media3 ambient video
 mode with sound. Everything is driven from the D-pad.
 
+![Ambient on an Android TV emulator: launcher, Home, slideshow, ambient video, Settings and back](docs/demo/ambient-tv-demo.gif)
+
 <p>
   <img src="docs/demo/02-home.png" width="420" alt="Home">
   <img src="docs/demo/03-slideshow.png" width="420" alt="Slideshow with clock and weather">
@@ -18,6 +20,8 @@ mode with sound. Everything is driven from the D-pad.
   <img src="docs/demo/09-city-picker.png" width="420" alt="City picker">
   <img src="docs/demo/01-launcher-apps-row.png" width="420" alt="Banner in the TV launcher">
 </p>
+
+Demo recording (55 s, emulator): [docs/demo/ambient-tv-demo.mp4](docs/demo/ambient-tv-demo.mp4)
 
 More captures from the emulator run are in [docs/demo](docs/demo).
 
